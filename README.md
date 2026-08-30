@@ -6,21 +6,110 @@ i proponuje metadane (tytuł, wydawca, rok, opis), a następnie zapisuje wpis w
 bazie SQLite na dysku. Działa na komputerze i jest dostępna z telefonu w tej
 samej sieci Wi-Fi.
 
-## Uruchomienie
+## Pierwsze kroki (Getting Started)
+
+Aplikacja do uruchomienia potrzebuje **Node.js** — środowiska, które uruchamia
+program. Instaluje się je raz, z jednego pliku. Poniżej instrukcje krok po kroku
+(nie musisz być programistą ani niczego konfigurować ręcznie).
+
+### 1. Zainstaluj Node.js
+
+Wejdź na stronę **https://nodejs.org** i pobierz wersję oznaczoną **LTS**
+(zielony przycisk) — to najstabilniejsza wersja.
+
+#### macOS
+
+1. Otwórz https://nodejs.org w przeglądarce.
+2. Kliknij zielony przycisk **LTS** — pobierze się plik `.pkg`.
+3. Otwórz pobrany plik (folder **Pobrane**) i kliknij dwukrotnie.
+4. Klikaj **Dalej / Kontynuuj**, zaakceptuj licencję, a przy pytaniu podaj
+   hasło komputera. Zostaw wszystkie ustawienia domyślne.
+5. Kliknij **Zamknij** — gotowe.
+
+#### Windows
+
+1. Otwórz https://nodejs.org w przeglądarce.
+2. Kliknij zielony przycisk **LTS** — pobierze się plik `.msi`.
+3. Otwórz pobrany plik i kliknij dwukrotnie.
+4. Klikaj **Next / Dalej**, zaakceptuj licencję i zostaw ustawienia domyślne
+   (opcja „Add to PATH" ma być zaznaczona — domyślnie jest).
+5. Kliknij **Finish / Zakończ** — gotowe.
+
+#### Sprawdź, czy instalacja się udała
+
+Otwórz terminal: **macOS** — program **Terminal** (Aplikacje → Narzędzia),
+**Windows** — **Command Prompt** lub **PowerShell** (z menu Start). Wpisz:
+
+```bash
+node -v
+npm -v
+```
+
+Powinny wyświetlić się numery wersji, np.:
+
+```
+v22.12.0
+10.9.0
+```
+
+Jeśli zamiast tego pojawi się błąd, zamknij terminal, otwórz go ponownie i
+spróbuj jeszcze raz.
+
+### 2. Uruchom lokalnie
+
+1. Otwórz terminal w folderze projektu:
+   - **macOS:** wpisz `cd ` (ze spacją), przeciągnij folder projektu do okna
+     terminala i wciśnij Enter.
+   - **Windows:** otwórz folder projektu w Eksploratorze plików, kliknij pasek
+     adresu, wpisz `cmd` i wciśnij Enter.
+2. Zainstaluj zależności (tylko pierwszy raz):
 
 ```bash
 npm install
+```
+
+3. Uruchom backend i frontend razem:
+
+```bash
 npm run dev:all
 ```
 
-- Frontend (Vite): http://localhost:5173
-- Backend (API): http://localhost:3001
+Poczekaj chwilę, aż wszystko się załaduje. Na komputerze otwórz przeglądarkę pod
+adresem **http://localhost:5173** (backend działa na porcie `3001`, frontend sam
+go proxy-uje).
 
-Do użytku z telefonu Vite nasłuchuje na wszystkich interfejsach (`host: true`),
-więc otwórz w telefonie `http://<IP_komputera>:5173` (komputer i telefon muszą
-być w tej samej sieci).
+### 3. Adres dla telefonu (znajdziesz go w konsoli)
 
-Możesz też uruchomić osobno w dwóch terminalach:
+Po uruchomieniu aplikacja sama wyświetla w konsoli adres, pod którym jest
+dostępna z telefonu. Nie musisz szukać IP ręcznie — odczytaj wiersz **Network**.
+Przykładowy output konsoli:
+
+```
+[api] Komiksy API działa na http://0.0.0.0:3001
+
+[web]   VITE v8.2.2  ready in 350 ms
+[web]
+[web]   ➜  Local:   http://localhost:5173/
+[web]   ➜  Network: http://192.168.0.104:5173/
+```
+
+Objaśnienie:
+
+- **Local** — adres na tym samym komputerze (używasz go na komputerze).
+- **Network** — adres dla telefonu i innych urządzeń w tej samej sieci Wi-Fi.
+  Wpisz go w przeglądarce telefonu, np. `http://192.168.0.104:5173`.
+  (`192.168.0.104` to przykład — u Ciebie będzie inny adres, odczytaj go ze
+  swojego wiersza **Network**.)
+
+Dodatkowe uwagi:
+
+- komputer i telefon muszą być podłączone do **tej samej sieci Wi-Fi**,
+- jeśli strona na telefonie się nie otwiera, sprawdź zaporę (firewall)
+  macOS/Windows, aby zezwolić Node/Vite na połączenia przychodzące,
+- adres IP może się zmienić po restarcie komputera lub routera — wtedy ponownie
+  odczytaj wiersz **Network** z konsoli.
+
+Możesz też uruchomić backend i frontend osobno w dwóch terminalach:
 
 ```bash
 npm run server   # backend
