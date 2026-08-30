@@ -1,6 +1,57 @@
 import { useEffect, useState } from 'react'
 import { getComic, deleteComic, splitTags, splitUrls } from '../api.js'
 
+async function copyToClipboard(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    try {
+      await navigator.clipboard.writeText(text)
+      return true
+    } catch {
+      // fall through to the legacy fallback below
+    }
+  }
+  try {
+    const ta = document.createElement('textarea')
+    ta.value = text
+    ta.style.position = 'fixed'
+    ta.style.top = '0'
+    ta.style.opacity = '0'
+    document.body.appendChild(ta)
+    ta.focus()
+    ta.select()
+    const ok = document.execCommand('copy')
+    document.body.removeChild(ta)
+    return ok
+  } catch {
+    return false
+  }
+}
+
+function CopyButton({ value, label }) {
+  const [copied, setCopied] = useState(false)
+
+  async function handleCopy() {
+    if (!value) return
+    const ok = await copyToClipboard(value)
+    if (ok) {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      className="copy-btn"
+      onClick={handleCopy}
+      title={`Kopiuj ${label}`}
+      aria-label={`Kopiuj ${label}`}
+    >
+      {copied ? '✓' : '⧉'}
+    </button>
+  )
+}
+
 export default function ComicDetail({ id, onBack, onEdit, onDeleted }) {
   const [comic, setComic] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -33,6 +84,11 @@ export default function ComicDetail({ id, onBack, onEdit, onDeleted }) {
   const categories = splitTags(comic.categories)
   const urls = splitUrls(comic.image_urls)
 
+  const googleQuery = [comic.title, comic.isbn].filter(Boolean).join(' ')
+  const googleUrl = googleQuery
+    ? `https://www.google.com/search?q=${encodeURIComponent(googleQuery)}`
+    : ''
+
   return (
     <div className="detail-view">
       <div className="detail-actions">
@@ -40,6 +96,11 @@ export default function ComicDetail({ id, onBack, onEdit, onDeleted }) {
           ← Wróć
         </button>
         <div>
+          {googleUrl && (
+            <a className="google-btn" href={googleUrl} target="_blank" rel="noreferrer">
+              🔍 Szukaj w Google
+            </a>
+          )}
           <button type="button" className="ghost" onClick={onEdit}>
             Edytuj
           </button>
@@ -70,8 +131,16 @@ export default function ComicDetail({ id, onBack, onEdit, onDeleted }) {
         </div>
 
         <div className="detail-info">
-          <h1>{comic.title || '(bez tytułu)'}</h1>
-          {comic.series && <div className="series">{comic.series}</div>}
+          <h1 className="detail-title">
+            <span>{comic.title || '(bez tytułu)'}</span>
+            {comic.title && <CopyButton value={comic.title} label="tytuł" />}
+          </h1>
+          {comic.series && (
+            <div className="series">
+              <span>{comic.series}</span>
+              <CopyButton value={comic.series} label="serię" />
+            </div>
+          )}
 
           <dl className="facts">
             {comic.year && (
@@ -83,7 +152,10 @@ export default function ComicDetail({ id, onBack, onEdit, onDeleted }) {
             {comic.isbn && (
               <>
                 <dt>ISBN</dt>
-                <dd>{comic.isbn}</dd>
+                <dd className="fact-value">
+                  <span>{comic.isbn}</span>
+                  <CopyButton value={comic.isbn} label="ISBN" />
+                </dd>
               </>
             )}
             {comic.volume_number && (
@@ -113,19 +185,18 @@ export default function ComicDetail({ id, onBack, onEdit, onDeleted }) {
                 <dd>{artists.join(', ')}</dd>
               </>
             )}
-            {categories.length > 0 && (
-              <>
-                <dt>Kategorie</dt>
-                <dd>{categories.join(', ')}</dd>
-              </>
-            )}
           </dl>
 
-          {tags.length > 0 && (
+          {(tags.length > 0 || categories.length > 0) && (
             <div className="detail-tags">
               {tags.map((tag) => (
-                <span key={tag} className="tag-chip static">
+                <span key={`tag-${tag}`} className="tag-chip static">
                   {tag}
+                </span>
+              ))}
+              {categories.map((cat) => (
+                <span key={`cat-${cat}`} className="tag-chip static secondary">
+                  {cat}
                 </span>
               ))}
             </div>

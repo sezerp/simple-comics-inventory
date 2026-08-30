@@ -521,10 +521,18 @@
   line-height: 1.2;
   margin-bottom: 6px;
 }
+.detail-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 .series {
   color: var(--text-muted);
   font-size: 16px;
   margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .facts {
@@ -540,11 +548,57 @@
 .facts dd {
   margin: 0;
 }
+.fact-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
 .detail-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+.copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.copy-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.detail-title .copy-btn {
+  width: 30px;
+  height: 30px;
+  font-size: 16px;
+}
+.google-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--accent);
+  background: var(--surface);
+  color: var(--accent);
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.google-btn:hover {
+  background: var(--accent-bg);
 }
 
 .detail-section {
@@ -603,6 +657,11 @@
 }
 .tag-chip.static {
   cursor: default;
+}
+.tag-chip.secondary {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
 }
 .tag-chip button {
   border: none;
