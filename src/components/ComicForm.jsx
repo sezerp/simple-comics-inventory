@@ -16,6 +16,7 @@ const EMPTY_FORM = {
   volume_number: '',
   volume_total: '',
   year: '',
+  isbn: '',
   publisher: '',
   description: '',
 }
@@ -35,6 +36,9 @@ function imageUrlsFrom(links = {}) {
 export default function ComicForm({ id, onDone, onCancel }) {
   const [form, setForm] = useState(EMPTY_FORM)
   const [tags, setTags] = useState([])
+  const [writers, setWriters] = useState([])
+  const [artists, setArtists] = useState([])
+  const [categories, setCategories] = useState([])
   const [imageUrls, setImageUrls] = useState([])
   const [coverFile, setCoverFile] = useState(null)
   const [coverPreview, setCoverPreview] = useState('')
@@ -64,10 +68,14 @@ export default function ComicForm({ id, onDone, onCancel }) {
           volume_number: comic.volume_number,
           volume_total: comic.volume_total,
           year: comic.year,
+          isbn: comic.isbn,
           publisher: comic.publisher,
           description: comic.description,
         })
         setTags(splitTags(comic.tags))
+        setWriters(splitTags(comic.writers))
+        setArtists(splitTags(comic.artists))
+        setCategories(splitTags(comic.categories))
         setImageUrls(splitUrls(comic.image_urls))
         setExistingCover(comic.cover_path || '')
       })
@@ -114,9 +122,19 @@ export default function ComicForm({ id, onDone, onCancel }) {
       volume_number: s.volumeNumber || f.volume_number,
       volume_total: s.volumeTotal || f.volume_total,
       year: s.publishedDate ? s.publishedDate.slice(0, 4) : f.year,
+      isbn: s.isbn || f.isbn,
       publisher: s.publisher || f.publisher,
       description: s.description || f.description,
     }))
+    if (s.writers?.length) {
+      setWriters((prev) => [...new Set([...prev, ...s.writers])])
+    }
+    if (s.artists?.length) {
+      setArtists((prev) => [...new Set([...prev, ...s.artists])])
+    }
+    if (s.categories?.length) {
+      setCategories((prev) => [...new Set([...prev, ...s.categories])])
+    }
     const urls = s.imageUrls?.length ? s.imageUrls : imageUrlsFrom(s.imageLinks)
     if (urls.length) setImageUrls((prev) => [...new Set([...prev, ...urls])].slice(0, 10))
   }
@@ -153,6 +171,9 @@ export default function ComicForm({ id, onDone, onCancel }) {
       fd.append(key, value ?? '')
     }
     fd.append('tags', JSON.stringify(tags))
+    fd.append('writers', JSON.stringify(writers))
+    fd.append('artists', JSON.stringify(artists))
+    fd.append('categories', JSON.stringify(categories))
     fd.append('image_urls', JSON.stringify(imageUrls))
     if (coverFile) fd.append('cover', coverFile)
 
@@ -319,14 +340,39 @@ export default function ComicForm({ id, onDone, onCancel }) {
               />
             </label>
             <label>
-              Wydawca
+              ISBN
               <input
                 type="text"
-                value={form.publisher}
-                onChange={(e) => setField('publisher', e.target.value)}
+                placeholder="np. 978…"
+                value={form.isbn}
+                onChange={(e) => setField('isbn', e.target.value)}
               />
             </label>
           </div>
+
+          <label>
+            Wydawca
+            <input
+              type="text"
+              value={form.publisher}
+              onChange={(e) => setField('publisher', e.target.value)}
+            />
+          </label>
+
+          <label>
+            Pisarz
+            <TagInput value={writers} onChange={setWriters} presets={[]} />
+          </label>
+
+          <label>
+            Rysownik / Artysta
+            <TagInput value={artists} onChange={setArtists} presets={[]} />
+          </label>
+
+          <label>
+            Kategorie
+            <TagInput value={categories} onChange={setCategories} presets={[]} />
+          </label>
 
           <label>
             Tagi

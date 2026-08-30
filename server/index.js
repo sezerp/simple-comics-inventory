@@ -64,19 +64,22 @@ const STRING_FIELDS = [
   'volume_number',
   'volume_total',
   'year',
+  'isbn',
   'publisher',
   'description',
 ]
+
+const LIST_FIELDS = ['image_urls', 'tags', 'writers', 'artists', 'categories']
 
 function normalizeBody(body = {}, { withDefaults = false } = {}) {
   const out = {}
   for (const field of STRING_FIELDS) {
     if (withDefaults || field in body) out[field] = body[field] ?? ''
   }
-  if ('image_urls' in body) out.image_urls = parseList(body.image_urls)
-  else if (withDefaults) out.image_urls = []
-  if ('tags' in body) out.tags = parseList(body.tags)
-  else if (withDefaults) out.tags = []
+  for (const field of LIST_FIELDS) {
+    if (field in body) out[field] = parseList(body[field])
+    else if (withDefaults) out[field] = []
+  }
   return out
 }
 
@@ -90,7 +93,16 @@ app.get('/api/comics', async (req, res) => {
     if (q) {
       const needle = String(q).toLowerCase()
       comics = comics.filter((c) =>
-        [c.title, c.series, c.publisher, c.description]
+        [
+          c.title,
+          c.series,
+          c.publisher,
+          c.description,
+          c.writers,
+          c.artists,
+          c.categories,
+          c.isbn,
+        ]
           .join(' ')
           .toLowerCase()
           .includes(needle),

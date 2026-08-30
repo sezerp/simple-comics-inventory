@@ -20,7 +20,11 @@ const HEADERS = [
   'volume_number',
   'volume_total',
   'year',
+  'isbn',
   'publisher',
+  'writers',
+  'artists',
+  'categories',
   'description',
   'cover_path',
   'image_urls',
@@ -103,7 +107,11 @@ export async function createComic(data) {
     volume_number: data.volume_number || '',
     volume_total: data.volume_total || '',
     year: data.year || '',
+    isbn: data.isbn || '',
     publisher: data.publisher || '',
+    writers: joinList(data.writers),
+    artists: joinList(data.artists),
+    categories: joinList(data.categories),
     description: data.description || '',
     cover_path: data.cover_path || '',
     image_urls: joinList(data.image_urls),
@@ -128,7 +136,16 @@ export async function updateComic(id, data) {
     volume_number: data.volume_number ?? existing.volume_number,
     volume_total: data.volume_total ?? existing.volume_total,
     year: data.year ?? existing.year,
+    isbn: data.isbn ?? existing.isbn,
     publisher: data.publisher ?? existing.publisher,
+    writers:
+      data.writers !== undefined ? joinList(data.writers) : existing.writers,
+    artists:
+      data.artists !== undefined ? joinList(data.artists) : existing.artists,
+    categories:
+      data.categories !== undefined
+        ? joinList(data.categories)
+        : existing.categories,
     description: data.description ?? existing.description,
     cover_path: data.cover_path ?? existing.cover_path,
     image_urls:

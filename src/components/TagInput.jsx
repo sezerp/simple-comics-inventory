@@ -2,10 +2,10 @@ import { useState } from 'react'
 
 const SUGGESTED = ['DC', 'Marvel', 'Image', 'Dark Horse', 'Vertigo', 'IDW', 'Boom!']
 
-export default function TagInput({ value = [], suggestions = [], onChange }) {
+export default function TagInput({ value = [], suggestions = [], onChange, presets = SUGGESTED }) {
   const [input, setInput] = useState('')
 
-  const allSuggestions = [...new Set([...SUGGESTED, ...suggestions, ...value])]
+  const allSuggestions = [...new Set([...presets, ...suggestions, ...value])]
   const filtered = allSuggestions.filter(
     (t) =>
       input &&

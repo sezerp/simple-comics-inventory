@@ -289,15 +289,19 @@ function mapGeminiResult(data) {
     series: data.series ? String(data.series) : '',
     volumeNumber: data.volume_number ? String(data.volume_number) : '',
     volumeTotal: data.volume_total ? String(data.volume_total) : '',
-    authors: Array.isArray(data.authors)
-      ? data.authors.map((a) => String(a)).filter(Boolean)
+    writers: Array.isArray(data.writers)
+      ? data.writers.map((w) => String(w)).filter(Boolean)
+      : [],
+    artists: Array.isArray(data.artists)
+      ? data.artists.map((a) => String(a)).filter(Boolean)
       : [],
     publisher: data.publisher ? String(data.publisher) : '',
-    publishedDate: data.publishedDate ? String(data.publishedDate) : '',
+    publishedDate: data.published_year ? String(data.published_year) : '',
+    isbn: data.isbn ? String(data.isbn) : '',
     description: data.description ? String(data.description) : '',
     pageCount: '',
     categories: Array.isArray(data.categories)
-      ? data.categories.map((c) => String(c)).filter(Boolean).slice(0, 5)
+      ? data.categories.map((c) => String(c)).filter(Boolean).slice(0, 10)
       : [],
     imageLinks: {},
     imageUrls: Array.isArray(data.image_urls)

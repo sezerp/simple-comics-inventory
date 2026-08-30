@@ -28,6 +28,9 @@ export default function ComicDetail({ id, onBack, onEdit, onDeleted }) {
   if (!comic) return <div className="state">Nie znaleziono komiksu.</div>
 
   const tags = splitTags(comic.tags)
+  const writers = splitTags(comic.writers)
+  const artists = splitTags(comic.artists)
+  const categories = splitTags(comic.categories)
   const urls = splitUrls(comic.image_urls)
 
   return (
@@ -77,6 +80,12 @@ export default function ComicDetail({ id, onBack, onEdit, onDeleted }) {
                 <dd>{comic.year}</dd>
               </>
             )}
+            {comic.isbn && (
+              <>
+                <dt>ISBN</dt>
+                <dd>{comic.isbn}</dd>
+              </>
+            )}
             {comic.volume_number && (
               <>
                 <dt>Tom</dt>
@@ -90,6 +99,24 @@ export default function ComicDetail({ id, onBack, onEdit, onDeleted }) {
               <>
                 <dt>Wydawca</dt>
                 <dd>{comic.publisher}</dd>
+              </>
+            )}
+            {writers.length > 0 && (
+              <>
+                <dt>Pisarz</dt>
+                <dd>{writers.join(', ')}</dd>
+              </>
+            )}
+            {artists.length > 0 && (
+              <>
+                <dt>Rysownik / Artysta</dt>
+                <dd>{artists.join(', ')}</dd>
+              </>
+            )}
+            {categories.length > 0 && (
+              <>
+                <dt>Kategorie</dt>
+                <dd>{categories.join(', ')}</dd>
               </>
             )}
           </dl>

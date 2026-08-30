@@ -35,11 +35,14 @@ Dane przechowywane są w pliku `data/comics.csv`:
 - `data/gallery/` — (opcjonalnie) pobrane zdjęcia,
 - `data/tmp/` — pliki tymczasowe OCR.
 
-Kolumny CSV: `id, title, series, volume_number, volume_total, year, publisher,
-description, cover_path, image_urls, tags, created_at, updated_at`.
+Kolumny CSV: `id, title, series, volume_number, volume_total, year, isbn,
+publisher, writers, artists, categories, description, cover_path, image_urls,
+tags, created_at, updated_at`.
 
-Tagi (np. `DC`, `Marvel`) zapisywane są jako lista rozdzielona `|`. Lista tagów
-jest dynamiczna — możesz dodawać dowolne nowe tagi w formularzu.
+Listy (`writers` — pisarz, `artists` — rysownik/artysta, `categories` —
+kategorie, `tags` — tagi, `image_urls` — linki do zdjęć) zapisywane są jako
+wartości rozdzielone `|`. Listy tagów i kategorii są dynamiczne — możesz
+dodawać dowolne nowe pozycje w formularzu.
 
 ## Rozpoznawanie okładki (Gemini)
 
