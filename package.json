@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "csv-parse": "^7.0.2",
-    "csv-stringify": "^6.8.3",
     "express": "^5.2.1",
     "isbn3": "^2.0.10",
     "multer": "^2.3.0",

@@ -18,11 +18,13 @@ dist-ssr
 .idea
 .DS_Store
 
-# App data (uploaded images)
+# App data (uploaded images and database)
 data/covers
 data/gallery
 data/tmp
 data/tesseract
+data/*.db
+data/*.migrated
 *.suo
 *.ntvs*
 *.njsproj

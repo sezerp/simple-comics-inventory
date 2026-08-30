@@ -3,8 +3,8 @@
 Lokalna aplikacja webowa do katalogowania kolekcji komiksów. Wgrywasz zdjęcie
 okładki, aplikacja rozpoznaje ją przez Gemini (obraz + wyszukiwanie w internecie)
 i proponuje metadane (tytuł, wydawca, rok, opis), a następnie zapisuje wpis w
-pliku CSV na dysku. Działa na komputerze i jest dostępna z telefonu w tej samej
-sieci Wi-Fi.
+bazie SQLite na dysku. Działa na komputerze i jest dostępna z telefonu w tej
+samej sieci Wi-Fi.
 
 ## Uruchomienie
 
@@ -29,20 +29,25 @@ npm run dev      # frontend
 
 ## Dane
 
-Dane przechowywane są w pliku `data/comics.csv`:
+Dane przechowywane są w bazie SQLite `data/comics.db` (wbudowane `node:sqlite`,
+bez dodatkowych zależności):
 
 - `data/covers/` — wgrane zdjęcia okładek,
 - `data/gallery/` — (opcjonalnie) pobrane zdjęcia,
 - `data/tmp/` — pliki tymczasowe OCR.
 
-Kolumny CSV: `id, title, series, volume_number, volume_total, year, isbn,
-publisher, writers, artists, categories, description, cover_path, image_urls,
-tags, created_at, updated_at`.
+Tabela `comics` ma kolumny: `id, title, series, volume_number, volume_total,
+year, isbn, publisher, writers, artists, categories, description, cover_path,
+image_urls, tags, created_at, updated_at`.
 
 Listy (`writers` — pisarz, `artists` — rysownik/artysta, `categories` —
 kategorie, `tags` — tagi, `image_urls` — linki do zdjęć) zapisywane są jako
 wartości rozdzielone `|`. Listy tagów i kategorii są dynamiczne — możesz
 dodawać dowolne nowe pozycje w formularzu.
+
+Przy pierwszym uruchomieniu po aktualizacji aplikacja automatycznie migruje
+istniejący plik `data/comics.csv` do SQLite (i zachowuje go jako kopię zapasową
+`data/comics.csv.migrated`).
 
 ## Rozpoznawanie okładki (Gemini)
 
