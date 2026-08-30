@@ -784,6 +784,40 @@
   padding: 8px 10px;
   font-size: 14px;
 }
+.series-warning {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #fffbeb;
+  border: 1px solid #fbbf24;
+  color: #92400e;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+.series-warning-title {
+  font-weight: 600;
+}
+.series-warning-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.series-use-btn {
+  flex-shrink: 0;
+  border: 1px solid #fbbf24;
+  background: #fff;
+  color: #92400e;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.series-use-btn:hover {
+  background: #fef3c7;
+}
 .ocr-text pre {
   white-space: pre-wrap;
   font-size: 12px;

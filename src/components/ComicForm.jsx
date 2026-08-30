@@ -195,6 +195,10 @@ export default function ComicForm({ id, onDone, onCancel }) {
 
   if (loading) return <div className="state">Ładowanie…</div>
 
+  const similarSeriesCandidates = (ocrResult?.similarSeries || []).filter(
+    (name) => name !== (form.series || '').trim(),
+  )
+
   return (
     <form className="comic-form" onSubmit={handleSubmit}>
       <div className="form-head">
@@ -248,6 +252,24 @@ export default function ComicForm({ id, onDone, onCancel }) {
                 <div className="duplicate-warning">
                   ⚠️ Wygląda, że masz już: <strong>{ocrResult.duplicate.title}</strong>
                   {ocrResult.duplicate.year && ` (${ocrResult.duplicate.year})`}
+                </div>
+              )}
+
+              {similarSeriesCandidates.length > 0 && (
+                <div className="series-warning">
+                  <div className="series-warning-title">⚠️ Podobna seria już istnieje:</div>
+                  {similarSeriesCandidates.map((name) => (
+                    <div key={name} className="series-warning-row">
+                      <strong>{name}</strong>
+                      <button
+                        type="button"
+                        className="series-use-btn"
+                        onClick={() => setField('series', name)}
+                      >
+                        Użyj tej serii
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
 

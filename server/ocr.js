@@ -32,8 +32,12 @@ export async function recognizeCover(imagePath, meta = {}) {
   }
 
   const suggestions = gemini.title ? [mapGeminiResult(gemini)] : []
+  const comics = await store.listComics()
   let duplicate = null
-  if (query) duplicate = await findDuplicate(query, suggestions)
+  if (query) duplicate = findDuplicateIn(query, suggestions, comics)
+
+  const seriesName = String(gemini.series || '').trim()
+  const similarSeries = seriesName ? findSimilarSeriesIn(seriesName, comics) : []
 
   return {
     method: 'gemini',
@@ -43,6 +47,7 @@ export async function recognizeCover(imagePath, meta = {}) {
     query,
     suggestions,
     duplicate,
+    similarSeries,
     geminiDescription: gemini.description || '',
   }
 }
@@ -365,8 +370,7 @@ function titlesMatch(a, b) {
   return shorter.length >= 6 && longer.includes(shorter)
 }
 
-async function findDuplicate(query, suggestions) {
-  const comics = await store.listComics()
+function findDuplicateIn(query, suggestions, comics) {
   if (!query) return null
 
   for (const comic of comics) {
@@ -399,4 +403,20 @@ async function findDuplicate(query, suggestions) {
   }
 
   return null
+}
+
+// Finds existing series names that match or resemble `seriesName`, so the form
+// can offer to reuse the spelling already stored in the collection.
+function findSimilarSeriesIn(seriesName, comics) {
+  const matches = []
+  const seen = new Set()
+  for (const comic of comics) {
+    const existing = String(comic.series || '').trim()
+    if (!existing || seen.has(existing)) continue
+    if (titlesMatch(seriesName, existing)) {
+      seen.add(existing)
+      matches.push(existing)
+    }
+  }
+  return matches
 }
