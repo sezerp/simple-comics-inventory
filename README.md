@@ -164,6 +164,89 @@ GEMINI_MODEL=gemini-2.5-flash
 PORT=3001
 ```
 
+### Jak zdobyć klucz API Gemini (krok po kroku)
+
+Gemini to usługa Google. Aby z niej korzystać, potrzebujesz **konta Google**
+(np. Gmail) oraz **darmowego klucza API**, który wpiszesz do pliku `.env`.
+Konsola Google bywa zawiła, dlatego poniżej prowadzimy Cię krok po kroku — nie
+musisz być programistą.
+
+> **Ważne:** rozpoznawanie okładki przez Gemini wymaga **podpięcia rozliczenia
+> (billingu) do projektu Google Cloud**. To nie oznacza od razu kosztów — Google
+> daje duży darmowy limit miesięczny — ale bez podpiętej karty/rozliczenia usługa
+> nie zadziała (dostaniesz błąd „quota exceeded").
+
+#### 1. Załóż konto Google (jeśli jeszcze nie masz)
+
+1. Otwórz https://accounts.google.com/signup
+2. Wypełnij dane i utwórz konto (np. adres Gmail).
+3. Zaloguj się nim w przeglądarce.
+
+#### 2. Wejdź do Google Cloud Console i utwórz projekt
+
+1. Otwórz https://console.cloud.google.com
+2. Zaloguj się (jeśli trzeba) tym samym kontem Google.
+3. U góry kliknij listę projektów (domyślnie „Select a project" lub nazwa
+   bieżącego projektu), a potem **New project**.
+4. Wpisz nazwę, np. `Moje Komiksy`, i kliknij **Create**.
+5. Poczekaj, aż projekt się utworzy, i upewnij się, że jest wybrany (widoczny u
+   góry ekranu).
+
+#### 3. Podepnij rozliczenie (billing) do projektu
+
+1. Otwórz https://console.cloud.google.com/billing
+2. Kliknij **Link a billing account** (Podłącz konto rozliczeniowe).
+3. Jeśli nie masz jeszcze konta rozliczeniowego, kliknij **Create account**
+   (Utwórz konto rozliczeniowe) i podaj dane karty. Google pobiera dane tylko do
+   weryfikacji — przy darmowym limicie nic nie zapłacisz.
+4. Wybierz utworzone konto rozliczeniowe i potwierdź.
+
+#### 4. Włącz API Gemini (Generative Language API)
+
+1. Otwórz
+   https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com
+2. Upewnij się, że u góry wybrany jest Twój projekt.
+3. Kliknij **Enable** (Włącz) i poczekaj chwilę.
+
+#### 5. Utwórz klucz API
+
+1. Otwórz https://console.cloud.google.com/apis/credentials
+2. Kliknij **Create credentials** (Utwórz dane logowania) → **API key**.
+3. Pojawi się klucz w formacie `AIzaSy...`. Kliknij **Copy** (Kopiuj).
+
+#### 6. Wpisz klucz w aplikacji
+
+1. W folderze projektu utwórz plik `.env` (skopiuj `.env.example` i zmień nazwę
+   na `.env`, jeśli jeszcze go nie masz).
+2. Wklej klucz w linii `GEMINI_API_KEY=`:
+
+```bash
+GEMINI_API_KEY=AIzaSyTwojKlucz
+GEMINI_MODEL=gemini-2.5-flash
+PORT=3001
+```
+
+3. Uruchom ponownie aplikację (`npm run dev:all`), aby nowy klucz został
+   wczytany.
+
+#### Szybsza droga: Google AI Studio (bez konfiguracji billingu)
+
+Jeśli chcesz pominąć konfigurację projektu i billingu, możesz wygenerować klucz
+w **Google AI Studio**: https://aistudio.google.com/apikey → **Create API key**.
+Taki klucz też działa, ale ma mniejszy darmowy limit i szybciej możesz trafić na
+limit zapytań. Do regularnego katalogowania lepiej skorzystać z Google Cloud
+Console (kroki powyżej) z podpiętym rozliczeniem.
+
+#### Przydatne linki
+
+- Google Cloud Console: https://console.cloud.google.com
+- Tworzenie projektu: https://console.cloud.google.com/projectcreate
+- Rozliczenie (billing): https://console.cloud.google.com/billing
+- Włączanie Gemini API:
+  https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com
+- Klucze API (Credentials): https://console.cloud.google.com/apis/credentials
+- Google AI Studio (klucz bez billingu): https://aistudio.google.com/apikey
+
 Przepływ: zdjęcie okładki → Gemini (obraz + Google Search grounding) →
 structured output z metadanymi → propozycje do uzupełnienia formularza +
 wykrywanie duplikatu po tytule. Model `gemini-2.5-flash` obsługuje obrazy i
