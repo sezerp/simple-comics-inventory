@@ -3,6 +3,7 @@ import { listComics, listTags, splitTags } from '../api.js'
 
 const MAX_VISIBLE_FILTERS = 12
 const MAX_SUGGESTIONS = 6
+const GRID_PAGE_SIZE = 100
 
 function facetCounts(comics, field) {
   const counts = new Map()
@@ -16,9 +17,45 @@ function facetCounts(comics, field) {
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'pl'))
 }
 
-function FilterRow({ label, items, active, onToggle }) {
+function FilterRow({ label, items, active, onToggle, searchable = false }) {
   const [expanded, setExpanded] = useState(false)
+  const [search, setSearch] = useState('')
   if (!items.length) return null
+
+  if (searchable && items.length > MAX_VISIBLE_FILTERS) {
+    const q = search.trim().toLowerCase()
+    const matches = q ? items.filter((i) => i.name.toLowerCase().includes(q)) : items
+    return (
+      <div className="filter-group">
+        <span className="filter-group-label">{label}</span>
+        <input
+          className="filter-search"
+          type="search"
+          placeholder={`Szukaj: ${label.toLowerCase()}…`}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <div className="filter-scroll">
+          {matches.length === 0 ? (
+            <div className="filter-scroll-empty">Brak wyników</div>
+          ) : (
+            matches.map((item) => (
+              <button
+                key={item.name}
+                type="button"
+                className={`filter-chip ${active === item.name ? 'active' : ''}`}
+                onClick={() => onToggle(active === item.name ? '' : item.name)}
+              >
+                {item.name}
+                {item.count > 1 && <span className="chip-count">{item.count}</span>}
+              </button>
+            ))
+          )}
+        </div>
+      </div>
+    )
+  }
+
   const visible = expanded ? items : items.slice(0, MAX_VISIBLE_FILTERS)
   return (
     <div className="filter-group">
@@ -53,10 +90,11 @@ export default function ComicList({ onOpen }) {
   const [comics, setComics] = useState([])
   const [tags, setTags] = useState([])
   const [query, setQuery] = useState('')
-  const [filters, setFilters] = useState({ tag: '', writer: '', artist: '', title: '' })
+  const [filters, setFilters] = useState({ tag: '', writer: '', artist: '', series: '', title: '' })
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [visibleCount, setVisibleCount] = useState(GRID_PAGE_SIZE)
 
   useEffect(() => {
     listComics()
@@ -72,6 +110,7 @@ export default function ComicList({ onOpen }) {
   const writers = useMemo(() => facetCounts(comics, 'writers'), [comics])
   const artists = useMemo(() => facetCounts(comics, 'artists'), [comics])
   const titles = useMemo(() => facetCounts(comics, 'title'), [comics])
+  const series = useMemo(() => facetCounts(comics, 'series'), [comics])
 
   const suggestions = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -89,13 +128,17 @@ export default function ComicList({ onOpen }) {
       }
     }
     push(titles, 'title', 'Tytuł')
+    push(series, 'series', 'Seria')
     push(writers, 'writer', 'Pisarz')
     push(artists, 'artist', 'Rysownik')
     push(tags, 'tag', 'Tag')
     return out
-  }, [query, titles, writers, artists, tags])
+  }, [query, titles, series, writers, artists, tags])
 
-  const setFilter = (key, value) => setFilters((prev) => ({ ...prev, [key]: value }))
+  const setFilter = (key, value) => {
+    setFilters((prev) => ({ ...prev, [key]: value }))
+    setVisibleCount(GRID_PAGE_SIZE)
+  }
 
   function applySuggestion(s) {
     setFilter(s.type, s.name)
@@ -105,6 +148,7 @@ export default function ComicList({ onOpen }) {
 
   const activeFilters = [
     filters.title && { key: 'title', label: 'Tytuł', value: filters.title },
+    filters.series && { key: 'series', label: 'Seria', value: filters.series },
     filters.writer && { key: 'writer', label: 'Pisarz', value: filters.writer },
     filters.artist && { key: 'artist', label: 'Rysownik', value: filters.artist },
     filters.tag && { key: 'tag', label: 'Tag', value: filters.tag },
@@ -117,6 +161,7 @@ export default function ComicList({ onOpen }) {
       if (filters.writer && !splitTags(c.writers).includes(filters.writer)) return false
       if (filters.artist && !splitTags(c.artists).includes(filters.artist)) return false
       if (filters.title && c.title !== filters.title) return false
+      if (filters.series && c.series !== filters.series) return false
       if (q) {
         const hay = [
           c.title,
@@ -141,6 +186,8 @@ export default function ComicList({ onOpen }) {
     [filtered],
   )
 
+  const visibleComics = sorted.slice(0, visibleCount)
+
   const hasAnyFilter = query.trim().length > 0 || activeFilters.length > 0
 
   if (loading) return <div className="state">Ładowanie kolekcji…</div>
@@ -153,9 +200,12 @@ export default function ComicList({ onOpen }) {
           <input
             className="search"
             type="search"
-            placeholder="Szukaj tytułu, pisarza, rysownika…"
+            placeholder="Szukaj tytułu, serii, pisarza, rysownika…"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value)
+              setVisibleCount(GRID_PAGE_SIZE)
+            }}
             onFocus={() => setShowSuggestions(true)}
             onBlur={() => setShowSuggestions(false)}
           />
@@ -195,7 +245,10 @@ export default function ComicList({ onOpen }) {
           <button
             type="button"
             className="clear-filters"
-            onClick={() => setFilters({ tag: '', writer: '', artist: '', title: '' })}
+            onClick={() => {
+              setFilters({ tag: '', writer: '', artist: '', series: '', title: '' })
+              setVisibleCount(GRID_PAGE_SIZE)
+            }}
           >
             Wyczyść filtry
           </button>
@@ -220,6 +273,13 @@ export default function ComicList({ onOpen }) {
         active={filters.artist}
         onToggle={(v) => setFilter('artist', v)}
       />
+      <FilterRow
+        label="Seria"
+        items={series}
+        active={filters.series}
+        onToggle={(v) => setFilter('series', v)}
+        searchable
+      />
 
       {sorted.length === 0 ? (
         <div className="state empty">
@@ -228,8 +288,9 @@ export default function ComicList({ onOpen }) {
             : 'Brak komiksów. Kliknij „Dodaj komiks”, aby zacząć kolekcję.'}
         </div>
       ) : (
-        <div className="comic-grid">
-          {sorted.map((comic) => (
+        <>
+          <div className="comic-grid">
+          {visibleComics.map((comic) => (
             <button
               key={comic.id}
               type="button"
@@ -265,6 +326,21 @@ export default function ComicList({ onOpen }) {
             </button>
           ))}
         </div>
+        {visibleCount < sorted.length && (
+          <div className="load-more">
+            <div className="load-more-count">
+              Pokazano {visibleCount} z {sorted.length}
+            </div>
+            <button
+              type="button"
+              className="load-more-btn"
+              onClick={() => setVisibleCount((v) => v + GRID_PAGE_SIZE)}
+            >
+              Wczytaj więcej ({sorted.length - visibleCount} pozostało)
+            </button>
+          </div>
+        )}
+        </>
       )}
     </div>
   )
