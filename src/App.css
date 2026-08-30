@@ -633,7 +633,7 @@
   overflow: auto;
   margin: 8px 0 0;
 }
-.suggestions {
+.ocr-suggestions {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -643,14 +643,14 @@
   font-weight: 600;
   color: var(--text-muted);
 }
-.suggestion {
+.ocr-suggestion {
   text-align: left;
   border: 1px solid var(--border);
   background: var(--surface);
   border-radius: 8px;
   padding: 8px 10px;
 }
-.suggestion:hover {
+.ocr-suggestion:hover {
   border-color: var(--accent);
 }
 .suggestion-title {

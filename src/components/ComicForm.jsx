@@ -21,6 +21,11 @@ const EMPTY_FORM = {
   description: '',
 }
 
+// Chrome na iOS (CriOS) nie otwiera poprawnie aparatu przez `capture` — czarny ekran.
+// Wtedy pomijamy atrybut, by użytkownik dostał natywny arkusz (Zdjęcie z aparatu / Galeria).
+const IS_IOS_CHROME =
+  typeof navigator !== 'undefined' && /CriOS/.test(navigator.userAgent)
+
 function imageUrlsFrom(links = {}) {
   const order = [
     'extraLarge',
@@ -212,7 +217,7 @@ export default function ComicForm({ id, onDone, onCancel }) {
             <input
               type="file"
               accept="image/*"
-              capture="environment"
+              capture={IS_IOS_CHROME ? undefined : 'environment'}
               onChange={handlePhoto}
             />
             {coverPreview || existingCover ? (
@@ -254,13 +259,13 @@ export default function ComicForm({ id, onDone, onCancel }) {
               )}
 
               {ocrResult.suggestions?.length > 0 && (
-                <div className="suggestions">
+                <div className="ocr-suggestions">
                   <div className="suggestions-title">Propozycje (kliknij, aby uzupełnić):</div>
                   {ocrResult.suggestions.map((s, i) => (
                     <button
                       key={i}
                       type="button"
-                      className="suggestion"
+                      className="ocr-suggestion"
                       onClick={() => applySuggestion(s)}
                     >
                       <div className="suggestion-title">
@@ -278,7 +283,7 @@ export default function ComicForm({ id, onDone, onCancel }) {
                 <div className="gemini-description">
                   <div className="suggestions-title">Opis zaproponowany przez Gemini:</div>
                   <p>{ocrResult.geminiDescription}</p>
-                  <button type="button" className="suggestion" onClick={applyGeminiDescription}>
+                  <button type="button" className="ocr-suggestion" onClick={applyGeminiDescription}>
                     Użyj tego opisu
                   </button>
                 </div>
