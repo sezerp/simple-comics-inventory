@@ -26,6 +26,45 @@
   padding: 0;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.main-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.nav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 15px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: var(--radius);
+  transition: color 0.12s ease, background 0.12s ease;
+}
+.nav-item:hover {
+  color: var(--text);
+  background: var(--bg);
+}
+.nav-item.active {
+  color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.nav-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
 .app-main {
   flex: 1;
   width: 100%;
@@ -374,6 +413,63 @@
   padding: 2px 8px;
 }
 
+/* Series view */
+.series-view {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.series-heading {
+  font-size: 26px;
+  margin: 0;
+}
+
+.series-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.series-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  text-align: left;
+  padding: 0;
+  box-shadow: var(--shadow);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.series-card:hover {
+  transform: translateY(-2px);
+  box-shadow: rgba(20, 20, 40, 0.14) 0 6px 16px;
+}
+
+.series-card-body {
+  padding: 10px 12px 12px;
+}
+.series-card-body h3 {
+  font-size: 15px;
+  line-height: 1.3;
+  margin-bottom: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.series-count {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.series-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
 /* Detail */
 .detail-view {
   display: flex;
@@ -602,6 +698,19 @@
 @media (max-width: 760px) {
   .form-layout {
     grid-template-columns: 1fr;
+  }
+
+  .app-header {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .main-nav {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+  .header-actions {
+    order: 2;
   }
 }
 
