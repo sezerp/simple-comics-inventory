@@ -120,7 +120,7 @@ app.get('/api/export.html', async (req, res) => {
     const comics = await store.listComics()
     const html = await renderHtml(comics)
     res.setHeader('Content-Type', 'text/html; charset=utf-8')
-    res.setHeader('Content-Disposition', 'inline; filename="kolekcja.html"')
+    res.setHeader('Content-Disposition', 'attachment; filename="kolekcja.html"')
     res.send(html)
   } catch (err) {
     res.status(500).json({ error: err.message })

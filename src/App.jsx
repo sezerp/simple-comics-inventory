@@ -17,9 +17,15 @@ function App() {
 
   const navigate = (name) => setView({ name })
 
-  // Opens the static collection export in a new browser tab.
+  // Downloads the static collection export as a local file so that refreshing
+  // the exported page works offline (it does not point back to the server).
   const exportCollection = () => {
-    window.open('/api/export.html', '_blank', 'noopener')
+    const link = document.createElement('a')
+    link.href = '/api/export.html'
+    link.download = 'kolekcja.html'
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
   }
 
   const openComic = (id, from = 'list') => setView({ name: 'detail', id, from })

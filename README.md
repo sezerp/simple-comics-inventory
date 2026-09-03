@@ -143,7 +143,9 @@ istniejący plik `data/comics.csv` do SQLite (i zachowuje go jako kopię zapasow
 W prawym górnym rogu aplikacji znajduje się przycisk **⬇️ Eksport**. Po
 kliknięciu aplikacja generuje samodzielną stronę HTML z całą kolekcją (tytuł,
 seria, tom, rok, ISBN, wydawca, pisarz, rysownik, kategorie, tagi, opis oraz
-miniaturki okładek) i otwiera ją w nowej karcie przeglądarki.
+miniaturki okładek) i pobiera ją na dysk jako plik `kolekcja.html` (zwykle do
+folderu Pobrane). Zapisany plik otwierasz podwójnym kliknięciem — działa w pełni
+offline, a odświeżenie strony nie łączy się ponownie z serwerem.
 
 Kolekcja jest pogrupowana po **seriach**: strona startowa pokazuje kafelki serii
 (okładka pierwszego tomu + nazwa + liczba tomów), kliknięcie kafelka otwiera
