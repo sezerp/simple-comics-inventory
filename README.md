@@ -138,6 +138,25 @@ Przy pierwszym uruchomieniu po aktualizacji aplikacja automatycznie migruje
 istniejący plik `data/comics.csv` do SQLite (i zachowuje go jako kopię zapasową
 `data/comics.csv.migrated`).
 
+## Eksport (statyczna strona HTML)
+
+W prawym górnym rogu aplikacji znajduje się przycisk **⬇️ Eksport**. Po
+kliknięciu aplikacja generuje samodzielną stronę HTML z całą kolekcją (tytuł,
+seria, tom, rok, ISBN, wydawca, pisarz, rysownik, kategorie, tagi, opis oraz
+miniaturki okładek) i otwiera ją w nowej karcie przeglądarki.
+
+Kolekcja jest pogrupowana po **seriach**: strona startowa pokazuje kafelki serii
+(okładka pierwszego tomu + nazwa + liczba tomów), kliknięcie kafelka otwiera
+tomy danej serii, a przycisk **„← Wróć do listy serii”** wraca do listy.
+Komiksy bez przypisanej serii trafiają do grupy **„Bez serii”**.
+
+- Okładki są **osadzone bezpośrednio w pliku** (jako obrazki base64), więc strona
+  działa offline — możesz ją zapisać na dysku i przenieść na telefon (np.
+  AirDrop, e-mail, Drive), a potem otworzyć bez serwera i bez internetu.
+- Linki do zdjęć z internetu (`image_urls`) pozostają linkami — do ich otwarcia
+  potrzebne jest połączenie z internetem.
+- Strona nie modyfikuje bazy danych — to tylko podgląd/backup kolekcji.
+
 ## Rozpoznawanie okładki (Gemini)
 
 Okładkę rozpoznaje **Gemini** (model multimodalny + wyszukiwanie w internecie).

@@ -17,6 +17,11 @@ function App() {
 
   const navigate = (name) => setView({ name })
 
+  // Opens the static collection export in a new browser tab.
+  const exportCollection = () => {
+    window.open('/api/export.html', '_blank', 'noopener')
+  }
+
   const openComic = (id, from = 'list') => setView({ name: 'detail', id, from })
 
   // Highlight a nav item for its own view and for sub-views that belong to it
@@ -46,6 +51,9 @@ function App() {
           ))}
         </nav>
         <div className="header-actions">
+          <button type="button" className="ghost" onClick={exportCollection}>
+            ⬇️ Eksport
+          </button>
           <button type="button" className="primary" onClick={() => setView({ name: 'new' })}>
             + Dodaj komiks
           </button>

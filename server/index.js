@@ -11,6 +11,7 @@ import { promises as fs } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import * as store from './store.js'
 import { recognizeCover } from './ocr.js'
+import { renderHtml } from './export.js'
 
 const app = express()
 app.use(express.json())
@@ -109,6 +110,18 @@ app.get('/api/comics', async (req, res) => {
       )
     }
     res.json(comics)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+app.get('/api/export.html', async (req, res) => {
+  try {
+    const comics = await store.listComics()
+    const html = await renderHtml(comics)
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    res.setHeader('Content-Disposition', 'inline; filename="kolekcja.html"')
+    res.send(html)
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
