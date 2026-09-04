@@ -3,7 +3,7 @@ import sharp from 'sharp'
 import * as store from './store.js'
 
 const THUMB_WIDTH = 480
-const THUMB_QUALITY = 82
+const THUMB_QUALITY = 72
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -44,8 +44,8 @@ function factRow(label, value) {
   return `<p><span class="label">${escapeHtml(label)}:</span> ${escapeHtml(value)}</p>`
 }
 
-async function renderCard(comic) {
-  const cover = await coverDataUri(comic.cover_path)
+async function renderCard(comic, coverRef) {
+  const coverIdx = await coverRef(comic.cover_path)
   const volume =
     comic.volume_number || comic.volume_total
       ? [comic.volume_number, comic.volume_total].filter(Boolean).join(' / ')
@@ -75,7 +75,7 @@ async function renderCard(comic) {
   return `
     <article class="card">
       <div class="cover">
-        ${cover ? `<img src="${cover}" alt="Okładka: ${escapeHtml(comic.title)}" loading="lazy">` : '<div class="cover-empty">Brak okładki</div>'}
+        ${coverIdx >= 0 ? `<img data-cover="${coverIdx}" alt="Okładka: ${escapeHtml(comic.title)}" loading="lazy">` : '<div class="cover-empty">Brak okładki</div>'}
       </div>
       <div class="body">
         <h2>${escapeHtml(comic.title || '(bez tytułu)')}</h2>
@@ -122,14 +122,14 @@ function groupBySeries(comics) {
   return groups
 }
 
-async function renderSeriesTile(group, idx) {
-  const cover = await coverDataUri(group.cover.cover_path)
+async function renderSeriesTile(group, idx, coverRef) {
+  const coverIdx = await coverRef(group.cover.cover_path)
   return `
     <button type="button" class="series-tile" data-idx="${idx}">
       <div class="series-cover">
         ${
-          cover
-            ? `<img src="${cover}" alt="Okładka: ${escapeHtml(group.name)}" loading="lazy">`
+          coverIdx >= 0
+            ? `<img data-cover="${coverIdx}" alt="Okładka: ${escapeHtml(group.name)}" loading="lazy">`
             : '<div class="cover-empty">📚</div>'
         }
       </div>
@@ -141,9 +141,27 @@ async function renderSeriesTile(group, idx) {
 export async function renderHtml(comics) {
   const groups = groupBySeries(comics)
 
+  // Deduplicate cover images: each unique cover is embedded exactly once and
+  // referenced by index, so a series' first-volume cover isn't stored twice.
+  const coverUris = []
+  const coverIndex = new Map()
+  const coverRef = async (coverPath) => {
+    if (!coverPath) return -1
+    if (coverIndex.has(coverPath)) return coverIndex.get(coverPath)
+    const uri = await coverDataUri(coverPath)
+    if (!uri) {
+      coverIndex.set(coverPath, -1)
+      return -1
+    }
+    const idx = coverUris.length
+    coverUris.push(uri)
+    coverIndex.set(coverPath, idx)
+    return idx
+  }
+
   const tiles = []
   for (let i = 0; i < groups.length; i++) {
-    tiles.push(await renderSeriesTile(groups[i], i))
+    tiles.push(await renderSeriesTile(groups[i], i, coverRef))
   }
 
   // Pre-render every series' cards so the client-side navigation only has to
@@ -152,7 +170,7 @@ export async function renderHtml(comics) {
   for (const group of groups) {
     const cards = []
     for (const comic of group.volumes) {
-      cards.push(await renderCard(comic))
+      cards.push(await renderCard(comic, coverRef))
     }
     seriesData.push({
       name: group.name,
@@ -313,10 +331,18 @@ export async function renderHtml(comics) {
   </section>
 <script>
   const SERIES = ${JSON.stringify(seriesData)};
+  const COVERS = ${JSON.stringify(coverUris)};
   const listView = document.getElementById('view-list');
   const detailView = document.getElementById('view-detail');
   const detailTitle = document.getElementById('detail-title');
   const detailCards = document.getElementById('detail-cards');
+
+  function applyCovers(root) {
+    (root || document).querySelectorAll('img[data-cover]').forEach((img) => {
+      const uri = COVERS[Number(img.dataset.cover)];
+      if (uri) img.src = uri;
+    });
+  }
 
   function showList() {
     detailView.hidden = true;
@@ -329,6 +355,7 @@ export async function renderHtml(comics) {
     if (!group) return;
     detailTitle.textContent = group.name + ' · ' + group.countLabel;
     detailCards.innerHTML = group.cards;
+    applyCovers(detailCards);
     listView.hidden = true;
     detailView.hidden = false;
     window.scrollTo(0, 0);
@@ -338,6 +365,7 @@ export async function renderHtml(comics) {
     tile.addEventListener('click', () => showDetail(Number(tile.dataset.idx)));
   });
   document.getElementById('back-btn').addEventListener('click', showList);
+  applyCovers();
 </script>
 </body>
 </html>`

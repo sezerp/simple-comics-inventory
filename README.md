@@ -155,6 +155,10 @@ Komiksy bez przypisanej serii trafiają do grupy **„Bez serii”**.
 - Okładki są **osadzone bezpośrednio w pliku** (jako obrazki base64), więc strona
   działa offline — możesz ją zapisać na dysku i przenieść na telefon (np.
   AirDrop, e-mail, Drive), a potem otworzyć bez serwera i bez internetu.
+- Każda okładka jest przed osadzeniem **zmniejszana do maks. 480 px szerokości**
+  (JPEG, jakość 72) i zapisywana w pliku **tylko raz** — kafelek serii odwołuje
+  się do tej samej miniaturki co okładka pierwszego tomu, więc nie jest
+  duplikowana.
 - Linki do zdjęć z internetu (`image_urls`) pozostają linkami — do ich otwarcia
   potrzebne jest połączenie z internetem.
 - Strona nie modyfikuje bazy danych — to tylko podgląd/backup kolekcji.
