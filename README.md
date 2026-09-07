@@ -159,6 +159,9 @@ Komiksy bez przypisanej serii trafiają do grupy **„Bez serii”**.
   (JPEG, jakość 72) i zapisywana w pliku **tylko raz** — kafelek serii odwołuje
   się do tej samej miniaturki co okładka pierwszego tomu, więc nie jest
   duplikowana.
+- Strona ma pole **wyszukiwania** (po tytule, serii i autorze) oraz klikalne
+  **filtry autorów** — kliknięcie nazwy pisarza lub rysownika pokazuje jego
+  komiksy, a przycisk **„✕ Wyczyść filtry”** wraca do widoku serii.
 - Linki do zdjęć z internetu (`image_urls`) pozostają linkami — do ich otwarcia
   potrzebne jest połączenie z internetem.
 - Strona nie modyfikuje bazy danych — to tylko podgląd/backup kolekcji.

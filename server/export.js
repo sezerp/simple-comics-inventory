@@ -165,12 +165,22 @@ export async function renderHtml(comics) {
   }
 
   // Pre-render every series' cards so the client-side navigation only has to
-  // toggle sections, with no server round-trip.
+  // toggle sections, with no server round-trip. The same card HTML is also
+  // collected into a flat list to power the title search and author filters.
   const seriesData = []
+  const comicsData = []
   for (const group of groups) {
     const cards = []
     for (const comic of group.volumes) {
-      cards.push(await renderCard(comic, coverRef))
+      const card = await renderCard(comic, coverRef)
+      cards.push(card)
+      comicsData.push({
+        title: comic.title || '',
+        series: comic.series || '',
+        writers: store.splitList(comic.writers).map((s) => s.trim()).filter(Boolean),
+        artists: store.splitList(comic.artists).map((s) => s.trim()).filter(Boolean),
+        card,
+      })
     }
     seriesData.push({
       name: group.name,
@@ -178,6 +188,16 @@ export async function renderHtml(comics) {
       cards: cards.join('\n'),
     })
   }
+
+  // Alphabetical by title for predictable search results.
+  comicsData.sort((a, b) => a.title.localeCompare(b.title, 'pl'))
+
+  // Unique writer/artist names for the clickable author filters.
+  const authorSet = new Set()
+  for (const comic of comicsData) {
+    for (const name of [...comic.writers, ...comic.artists]) authorSet.add(name)
+  }
+  const authors = [...authorSet].sort((a, b) => a.localeCompare(b, 'pl'))
 
   const generatedAt = new Date().toLocaleString('pl-PL')
 
@@ -277,6 +297,53 @@ export async function renderHtml(comics) {
   .series-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .series-name { font-size: 15px; font-weight: 600; padding: 10px 12px 2px; }
   .series-count { font-size: 13px; color: #71717a; padding: 0 12px 12px; }
+  .toolbar {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 16px 24px 0;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  .toolbar input[type="search"] {
+    font: inherit;
+    font-size: 15px;
+    padding: 9px 14px;
+    border: 1px solid #d4d4d8;
+    border-radius: 10px;
+    background: #fff;
+    color: inherit;
+    width: 100%;
+    max-width: 480px;
+  }
+  .toolbar input[type="search"]:focus { outline: none; border-color: #2563eb; }
+  .author-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .author-label { font-size: 13px; color: #71717a; }
+  .author-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .author-chip {
+    font: inherit;
+    font-size: 13px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #f4f4f5;
+    border: 1px solid #e4e4e7;
+    color: #3f3f46;
+    cursor: pointer;
+  }
+  .author-chip:hover { border-color: #a1a1aa; }
+  .author-chip.active { background: #2563eb; border-color: #2563eb; color: #fff; }
+  .clear-btn {
+    font: inherit;
+    font-size: 13px;
+    color: #b91c1c;
+    background: none;
+    border: 1px solid #fca5a5;
+    border-radius: 8px;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+  .clear-btn:hover { background: #fee2e2; }
   .detail-bar {
     display: flex;
     align-items: center;
@@ -307,6 +374,10 @@ export async function renderHtml(comics) {
     .gallery-link, .back { color: #60a5fa; }
     .back { border-color: #52525b; }
     .back:hover { background: #3f3f46; }
+    .toolbar input[type="search"], .author-chip { background: #27272a; border-color: #3f3f46; color: #e4e4e7; }
+    .author-chip.active { background: #2563eb; border-color: #2563eb; color: #fff; }
+    .clear-btn { color: #f87171; border-color: #7f1d1d; }
+    .clear-btn:hover { background: #3f3f46; }
   }
 </style>
 </head>
@@ -315,12 +386,24 @@ export async function renderHtml(comics) {
     <h1>📚 Moje Komiksy</h1>
     <span class="meta">${groups.length} serii · ${comics.length} pozycji · wygenerowano ${escapeHtml(generatedAt)}</span>
   </header>
+  <div class="toolbar">
+    <input type="search" id="search-input" placeholder="Szukaj po tytule, serii lub autorze…">
+    <div class="author-bar">
+      <span class="author-label">Autorzy:</span>
+      <div class="author-chips" id="author-chips"></div>
+    </div>
+    <button type="button" class="clear-btn" id="clear-filters" hidden>✕ Wyczyść filtry</button>
+  </div>
   <section id="view-list">
     ${
       tiles.length
         ? `<div class="series-grid">${tiles.join('\n')}</div>`
         : '<p class="empty">Brak komiksów w kolekcji.</p>'
     }
+  </section>
+  <section id="view-results" hidden>
+    <div class="grid" id="results-cards"></div>
+    <p class="empty" id="results-empty" hidden>Brak komiksów spełniających kryteria.</p>
   </section>
   <section id="view-detail" hidden>
     <div class="detail-bar">
@@ -331,11 +414,24 @@ export async function renderHtml(comics) {
   </section>
 <script>
   const SERIES = ${JSON.stringify(seriesData)};
+  const COMICS = ${JSON.stringify(comicsData)};
+  const AUTHORS = ${JSON.stringify(authors)};
   const COVERS = ${JSON.stringify(coverUris)};
   const listView = document.getElementById('view-list');
   const detailView = document.getElementById('view-detail');
   const detailTitle = document.getElementById('detail-title');
   const detailCards = document.getElementById('detail-cards');
+  const resultsView = document.getElementById('view-results');
+  const resultsCards = document.getElementById('results-cards');
+  const resultsEmpty = document.getElementById('results-empty');
+  const searchInput = document.getElementById('search-input');
+  const authorChips = document.getElementById('author-chips');
+  const clearBtn = document.getElementById('clear-filters');
+  const selectedAuthors = new Set();
+
+  function esc(s) {
+    return String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
+  }
 
   function applyCovers(root) {
     (root || document).querySelectorAll('img[data-cover]').forEach((img) => {
@@ -346,6 +442,7 @@ export async function renderHtml(comics) {
 
   function showList() {
     detailView.hidden = true;
+    resultsView.hidden = true;
     listView.hidden = false;
     window.scrollTo(0, 0);
   }
@@ -357,14 +454,73 @@ export async function renderHtml(comics) {
     detailCards.innerHTML = group.cards;
     applyCovers(detailCards);
     listView.hidden = true;
+    resultsView.hidden = true;
     detailView.hidden = false;
     window.scrollTo(0, 0);
+  }
+
+  function hasFilters() {
+    return selectedAuthors.size > 0 || searchInput.value.trim() !== '';
+  }
+
+  function matches(comic) {
+    if (selectedAuthors.size > 0) {
+      const names = comic.writers.concat(comic.artists);
+      if (![...selectedAuthors].some((a) => names.includes(a))) return false;
+    }
+    const q = searchInput.value.trim().toLowerCase();
+    if (q) {
+      const hay = [comic.title, comic.series, ...comic.writers, ...comic.artists].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  }
+
+  function renderAuthorChips() {
+    authorChips.innerHTML = AUTHORS.map((a) =>
+      '<button type="button" class="author-chip" data-author="' + esc(a) + '">' + esc(a) + '</button>'
+    ).join('');
+    authorChips.querySelectorAll('.author-chip').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const name = btn.dataset.author;
+        if (selectedAuthors.has(name)) selectedAuthors.delete(name);
+        else selectedAuthors.add(name);
+        update();
+      });
+    });
+  }
+
+  function update() {
+    document.querySelectorAll('.author-chip').forEach((btn) => {
+      btn.classList.toggle('active', selectedAuthors.has(btn.dataset.author));
+    });
+    const filtering = hasFilters();
+    clearBtn.hidden = !filtering;
+    if (!filtering) {
+      resultsView.hidden = true;
+      listView.hidden = false;
+      return;
+    }
+    const matched = COMICS.filter(matches);
+    resultsCards.innerHTML = matched.map((c) => c.card).join('\\n');
+    applyCovers(resultsCards);
+    resultsEmpty.hidden = matched.length > 0;
+    listView.hidden = true;
+    detailView.hidden = true;
+    resultsView.hidden = false;
   }
 
   document.querySelectorAll('.series-tile').forEach((tile) => {
     tile.addEventListener('click', () => showDetail(Number(tile.dataset.idx)));
   });
   document.getElementById('back-btn').addEventListener('click', showList);
+  searchInput.addEventListener('input', update);
+  clearBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    selectedAuthors.clear();
+    update();
+  });
+  renderAuthorChips();
   applyCovers();
 </script>
 </body>
