@@ -162,6 +162,12 @@ Komiksy bez przypisanej serii trafiają do grupy **„Bez serii”**.
 - Strona ma pole **wyszukiwania** (po tytule, serii i autorze) oraz klikalne
   **filtry autorów** — kliknięcie nazwy pisarza lub rysownika pokazuje jego
   komiksy, a przycisk **„✕ Wyczyść filtry”** wraca do widoku serii.
+- Lista autorów jest domyślnie **zwinięta** — przycisk **„▸ Autorzy (N)”** ją
+  rozwija, a zaznaczeni autorzy zostają widoczni także po zwinięciu. Przy
+  ponad 30 autorach obok przycisku jest pole **„Filtruj autorów…”**, które
+  zawęża listę (wpisanie tekstu samo ją rozwija).
+- Wyszukiwanie i filtr autorów ignorują wielkość liter i **znaki diakrytyczne**
+  — np. „fernandez” znajdzie „Fernández”, a „lodz” znajdzie „Łódź”.
 - Linki do zdjęć z internetu (`image_urls`) pozostają linkami — do ich otwarcia
   potrzebne jest połączenie z internetem.
 - Strona nie modyfikuje bazy danych — to tylko podgląd/backup kolekcji.

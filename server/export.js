@@ -4,6 +4,8 @@ import * as store from './store.js'
 
 const THUMB_WIDTH = 480
 const THUMB_QUALITY = 72
+// Above this many authors the author list gets its own filter input.
+const AUTHOR_SEARCH_THRESHOLD = 30
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -318,9 +320,24 @@ export async function renderHtml(comics) {
     max-width: 480px;
   }
   .toolbar input[type="search"]:focus { outline: none; border-color: #2563eb; }
-  .author-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-  .author-label { font-size: 13px; color: #71717a; }
+  .author-bar { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+  .author-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .author-toggle {
+    font: inherit;
+    font-size: 13px;
+    padding: 5px 10px;
+    border-radius: 8px;
+    background: #fff;
+    border: 1px solid #d4d4d8;
+    color: #3f3f46;
+    cursor: pointer;
+  }
+  .author-toggle:hover { border-color: #a1a1aa; }
+  .author-toggle::before { content: '▸'; display: inline-block; width: 1em; }
+  .author-toggle[aria-expanded="true"]::before { content: '▾'; }
+  .toolbar input.author-search { font-size: 13px; padding: 5px 10px; border-radius: 8px; width: 220px; max-width: 100%; }
   .author-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .author-empty { margin: 0; font-size: 13px; color: #71717a; }
   .author-chip {
     font: inherit;
     font-size: 13px;
@@ -370,11 +387,11 @@ export async function renderHtml(comics) {
     .header, .card, .series-tile { background: #27272a; border-color: #3f3f46; }
     .chip { background: #3f3f46; border-color: #52525b; color: #e4e4e7; }
     .cover, .series-cover { background: #3f3f46; }
-    .label { color: #a1a1aa; }
+    .label, .author-empty { color: #a1a1aa; }
     .gallery-link, .back { color: #60a5fa; }
     .back { border-color: #52525b; }
     .back:hover { background: #3f3f46; }
-    .toolbar input[type="search"], .author-chip { background: #27272a; border-color: #3f3f46; color: #e4e4e7; }
+    .toolbar input[type="search"], .author-chip, .author-toggle { background: #27272a; border-color: #3f3f46; color: #e4e4e7; }
     .author-chip.active { background: #2563eb; border-color: #2563eb; color: #fff; }
     .clear-btn { color: #f87171; border-color: #7f1d1d; }
     .clear-btn:hover { background: #3f3f46; }
@@ -388,9 +405,13 @@ export async function renderHtml(comics) {
   </header>
   <div class="toolbar">
     <input type="search" id="search-input" placeholder="Szukaj po tytule, serii lub autorze…">
-    <div class="author-bar">
-      <span class="author-label">Autorzy:</span>
-      <div class="author-chips" id="author-chips"></div>
+    <div class="author-bar"${authors.length ? '' : ' hidden'}>
+      <div class="author-head">
+        <button type="button" class="author-toggle" id="author-toggle" aria-expanded="false" aria-controls="author-chips">Autorzy (${authors.length})</button>
+        <input type="search" class="author-search" id="author-search" placeholder="Filtruj autorów…" aria-label="Filtruj autorów"${authors.length > AUTHOR_SEARCH_THRESHOLD ? '' : ' hidden'}>
+      </div>
+      <div class="author-chips" id="author-chips" hidden></div>
+      <p class="author-empty" id="author-empty" hidden>Brak pasujących autorów</p>
     </div>
     <button type="button" class="clear-btn" id="clear-filters" hidden>✕ Wyczyść filtry</button>
   </div>
@@ -426,11 +447,21 @@ export async function renderHtml(comics) {
   const resultsEmpty = document.getElementById('results-empty');
   const searchInput = document.getElementById('search-input');
   const authorChips = document.getElementById('author-chips');
+  const authorToggle = document.getElementById('author-toggle');
+  const authorSearch = document.getElementById('author-search');
+  const authorEmpty = document.getElementById('author-empty');
   const clearBtn = document.getElementById('clear-filters');
   const selectedAuthors = new Set();
+  let authorsExpanded = false;
 
   function esc(s) {
     return String(s).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
+  }
+
+  // Case- and diacritics-insensitive form for searching ("fernandez" finds
+  // "Fernández"). NFD doesn't decompose ł, so it is mapped by hand.
+  function fold(s) {
+    return String(s).toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replaceAll('ł', 'l');
   }
 
   function applyCovers(root) {
@@ -468,9 +499,9 @@ export async function renderHtml(comics) {
       const names = comic.writers.concat(comic.artists);
       if (![...selectedAuthors].some((a) => names.includes(a))) return false;
     }
-    const q = searchInput.value.trim().toLowerCase();
+    const q = fold(searchInput.value.trim());
     if (q) {
-      const hay = [comic.title, comic.series, ...comic.writers, ...comic.artists].join(' ').toLowerCase();
+      const hay = fold([comic.title, comic.series, ...comic.writers, ...comic.artists].join(' '));
       if (!hay.includes(q)) return false;
     }
     return true;
@@ -490,10 +521,28 @@ export async function renderHtml(comics) {
     });
   }
 
-  function update() {
-    document.querySelectorAll('.author-chip').forEach((btn) => {
-      btn.classList.toggle('active', selectedAuthors.has(btn.dataset.author));
+  // Collapsed: only the selected authors stay visible. Expanded: every author
+  // matching the filter text, plus the selected ones.
+  function updateAuthorChips() {
+    const q = fold(authorSearch.value.trim());
+    let matched = 0;
+    let shown = 0;
+    authorChips.querySelectorAll('.author-chip').forEach((btn) => {
+      const name = btn.dataset.author;
+      const selected = selectedAuthors.has(name);
+      const match = !q || fold(name).includes(q);
+      if (match) matched++;
+      btn.classList.toggle('active', selected);
+      btn.hidden = !(selected || (authorsExpanded && match));
+      if (!btn.hidden) shown++;
     });
+    authorChips.hidden = shown === 0;
+    authorEmpty.hidden = !(authorsExpanded && matched === 0);
+    authorToggle.setAttribute('aria-expanded', String(authorsExpanded));
+  }
+
+  function update() {
+    updateAuthorChips();
     const filtering = hasFilters();
     clearBtn.hidden = !filtering;
     if (!filtering) {
@@ -515,12 +564,22 @@ export async function renderHtml(comics) {
   });
   document.getElementById('back-btn').addEventListener('click', showList);
   searchInput.addEventListener('input', update);
+  authorToggle.addEventListener('click', () => {
+    authorsExpanded = !authorsExpanded;
+    updateAuthorChips();
+  });
+  authorSearch.addEventListener('input', () => {
+    if (authorSearch.value.trim()) authorsExpanded = true;
+    updateAuthorChips();
+  });
   clearBtn.addEventListener('click', () => {
     searchInput.value = '';
+    authorSearch.value = '';
     selectedAuthors.clear();
     update();
   });
   renderAuthorChips();
+  updateAuthorChips();
   applyCovers();
 </script>
 </body>
