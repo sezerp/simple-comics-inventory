@@ -127,25 +127,53 @@ bez dodatkowych zależności):
 
 Tabela `comics` ma kolumny: `id, title, series, volume_number, volume_total,
 year, isbn, publisher, writers, artists, categories, description, cover_path,
-image_urls, tags, created_at, updated_at`.
+image_urls, tags, created_at, updated_at, loan_to, loan_date, loan_due`.
 
 Listy (`writers` — pisarz, `artists` — rysownik/artysta, `categories` —
 kategorie, `tags` — tagi, `image_urls` — linki do zdjęć) zapisywane są jako
 wartości rozdzielone `|`. Listy tagów i kategorii są dynamiczne — możesz
 dodawać dowolne nowe pozycje w formularzu.
 
+Kolumny wypożyczenia: `loan_to` — komu wypożyczono (puste = komiks nie jest
+wypożyczony), `loan_date` — kiedy, `loan_due` — sugerowany termin zwrotu
+(opcjonalny). Daty zapisywane są w formacie `RRRR-MM-DD`. Brakujące kolumny są
+dodawane do istniejącej bazy automatycznie przy starcie serwera.
+
 Przy pierwszym uruchomieniu po aktualizacji aplikacja automatycznie migruje
 istniejący plik `data/comics.csv` do SQLite (i zachowuje go jako kopię zapasową
 `data/comics.csv.migrated`).
+
+## Wypożyczenia
+
+Aplikacja pamięta, komu pożyczyłeś komiks:
+
+- W szczegółach komiksu kliknij **📤 Wypożycz** i wpisz **Komu**, **Kiedy**
+  (domyślnie dziś) i opcjonalnie **Do kiedy** — sugerowany termin zwrotu.
+  Przyciski **„+2 tyg.”** i **„+1 mies.”** ustawiają termin liczony od daty
+  wypożyczenia.
+- Wypożyczony komiks ma na liście **szarą okładkę** i znaczek **„Wypożyczona”**
+  w lewym górnym rogu. Gdy minie termin zwrotu, okładka dostaje **żółtą
+  ramkę**, a znaczek robi się żółty. Bez terminu komiks nigdy nie robi się
+  żółty.
+- Zakładka **🤝 Wypożyczone** pokazuje listę wypożyczonych komiksów: najpierw
+  te po terminie, potem według terminu zwrotu, na końcu te bez terminu.
+  Kliknięcie wiersza otwiera szczegóły komiksu.
+- **✓ Zwrócono** (w szczegółach lub na liście) kończy wypożyczenie; zaraz po
+  kliknięciu możesz to cofnąć przyciskiem **↩ Cofnij**.
+- Zapisywane jest tylko bieżące wypożyczenie — po zwrocie dane są usuwane
+  (bez historii).
+- Edycja komiksu w formularzu nie zmienia wypożyczenia, a wypożyczenie nie
+  zmienia daty „Zmieniono”.
 
 ## Eksport (statyczna strona HTML)
 
 W prawym górnym rogu aplikacji znajduje się przycisk **⬇️ Eksport**. Po
 kliknięciu aplikacja generuje samodzielną stronę HTML z całą kolekcją (tytuł,
-seria, tom, rok, ISBN, wydawca, pisarz, rysownik, kategorie, tagi, opis oraz
-miniaturki okładek) i pobiera ją na dysk jako plik `kolekcja.html` (zwykle do
-folderu Pobrane). Zapisany plik otwierasz podwójnym kliknięciem — działa w pełni
-offline, a odświeżenie strony nie łączy się ponownie z serwerem.
+seria, tom, rok, ISBN, wydawca, pisarz, rysownik, kategorie, tagi, opis,
+informacja o wypożyczeniu oraz miniaturki okładek) i pobiera ją na dysk jako
+plik `kolekcja.html` (zwykle do folderu Pobrane). Zapisany plik otwierasz
+podwójnym kliknięciem — działa w pełni offline, a odświeżenie strony nie łączy
+się ponownie z serwerem.
 
 Kolekcja jest pogrupowana po **seriach**: strona startowa pokazuje kafelki serii
 (okładka pierwszego tomu + nazwa + liczba tomów), kliknięcie kafelka otwiera
@@ -168,6 +196,11 @@ Komiksy bez przypisanej serii trafiają do grupy **„Bez serii”**.
   zawęża listę (wpisanie tekstu samo ją rozwija).
 - Wyszukiwanie i filtr autorów ignorują wielkość liter i **znaki diakrytyczne**
   — np. „fernandez” znajdzie „Fernández”, a „lodz” znajdzie „Łódź”.
+- Wypożyczenie widać na karcie komiksu tylko jako zwykły wiersz tekstu, np.
+  „Wypożyczona: Jan · od 01.10.2026 · zwrot do 15.10.2026” — bez szarej
+  okładki, znaczków i żółtych oznaczeń, bez filtrów (wyszukiwarka nie szuka po
+  osobie). Uwaga: plik zawiera imiona osób, którym pożyczyłeś komiksy — pamiętaj
+  o tym, zanim go komuś wyślesz.
 - Linki do zdjęć z internetu (`image_urls`) pozostają linkami — do ich otwarcia
   potrzebne jest połączenie z internetem.
 - Strona nie modyfikuje bazy danych — to tylko podgląd/backup kolekcji.

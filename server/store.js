@@ -32,6 +32,11 @@ const HEADERS = [
   'tags',
   'created_at',
   'updated_at',
+  // Loan (wypożyczenie): borrower, lend date and suggested return date as
+  // 'YYYY-MM-DD'. An empty loan_to means the comic is not lent.
+  'loan_to',
+  'loan_date',
+  'loan_due',
 ]
 
 const CREATE_TABLE = `CREATE TABLE IF NOT EXISTS comics (
@@ -48,8 +53,22 @@ function getDb() {
   if (!db) {
     db = new DatabaseSync(DB_PATH)
     db.exec(CREATE_TABLE)
+    addMissingColumns(db)
   }
   return db
+}
+
+// CREATE TABLE IF NOT EXISTS never alters an existing table, so columns added
+// to HEADERS later are appended to older databases here.
+function addMissingColumns(d) {
+  const existing = new Set(
+    d.prepare('PRAGMA table_info(comics)').all().map((c) => c.name),
+  )
+  for (const h of HEADERS) {
+    if (existing.has(h)) continue
+    d.exec(`ALTER TABLE comics ADD COLUMN ${h} TEXT NOT NULL DEFAULT ''`)
+    console.log(`[store] Added column ${h}`)
+  }
 }
 
 async function fileExists(filePath) {
@@ -171,6 +190,9 @@ export async function createComic(data) {
     tags: joinList(data.tags),
     created_at: now,
     updated_at: now,
+    loan_to: '',
+    loan_date: '',
+    loan_due: '',
   }
   getDb()
     .prepare(`INSERT INTO comics (${COLUMNS}) VALUES (${PLACEHOLDERS})`)
@@ -214,6 +236,15 @@ export async function updateComic(id, data) {
     .prepare(`UPDATE comics SET ${setClause} WHERE id = ?`)
     .run(...HEADERS.map((h) => updated[h]), id)
   return updated
+}
+
+// Sets or (with no arguments) clears the loan. Deliberately leaves updated_at
+// alone, so "Zmieniono" keeps meaning an edit of the comic's own data.
+export async function setLoan(id, { to = '', date = '', due = '' } = {}) {
+  const { changes } = getDb()
+    .prepare('UPDATE comics SET loan_to = ?, loan_date = ?, loan_due = ? WHERE id = ?')
+    .run(to, date, due, id)
+  return changes ? getComic(id) : null
 }
 
 export async function deleteComic(id) {

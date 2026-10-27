@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getComic, deleteComic, splitTags, splitUrls } from '../api.js'
+import LoanCover from './LoanCover.jsx'
+import LoanPanel from './LoanPanel.jsx'
 
 async function copyToClipboard(text) {
   if (navigator.clipboard && window.isSecureContext) {
@@ -122,13 +124,13 @@ export default function ComicDetail({ id, onBack, onEdit, onDeleted }) {
       </div>
 
       <div className="detail-hero">
-        <div className="detail-cover">
+        <LoanCover comic={comic} className="detail-cover">
           {comic.cover_path ? (
             <img src={comic.cover_path} alt={comic.title} />
           ) : (
             <div className="cover-placeholder large">📘</div>
           )}
-        </div>
+        </LoanCover>
 
         <div className="detail-info">
           <h1 className="detail-title">
@@ -201,6 +203,8 @@ export default function ComicDetail({ id, onBack, onEdit, onDeleted }) {
               ))}
             </div>
           )}
+
+          <LoanPanel comic={comic} onChange={setComic} />
         </div>
       </div>
 

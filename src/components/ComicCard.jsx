@@ -1,15 +1,16 @@
 import { splitTags } from '../api.js'
+import LoanCover from './LoanCover.jsx'
 
 export default function ComicCard({ comic, onOpen }) {
   return (
     <button type="button" className="comic-card" onClick={() => onOpen(comic.id)}>
-      <div className="cover">
+      <LoanCover comic={comic} className="cover">
         {comic.cover_path ? (
           <img src={comic.cover_path} alt={comic.title} loading="lazy" />
         ) : (
           <div className="cover-placeholder">📘</div>
         )}
-      </div>
+      </LoanCover>
       <div className="card-body">
         <h3>{comic.title || '(bez tytułu)'}</h3>
         <div className="card-meta">

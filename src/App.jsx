@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import ComicList from './components/ComicList.jsx'
 import SeriesView from './components/SeriesView.jsx'
+import LoansView from './components/LoansView.jsx'
 import ComicDetail from './components/ComicDetail.jsx'
 import ComicForm from './components/ComicForm.jsx'
 import './App.css'
@@ -10,6 +11,7 @@ import './App.css'
 const NAV_ITEMS = [
   { name: 'list', label: 'Komiksy', icon: '📚' },
   { name: 'series', label: 'Serie', icon: '🗂️' },
+  { name: 'loans', label: 'Wypożyczone', icon: '🤝' },
 ]
 
 function App() {
@@ -73,6 +75,10 @@ function App() {
 
         {view.name === 'series' && (
           <SeriesView onOpen={(id) => openComic(id, 'series')} />
+        )}
+
+        {view.name === 'loans' && (
+          <LoansView onOpen={(id) => openComic(id, 'loans')} />
         )}
 
         {view.name === 'detail' && (
