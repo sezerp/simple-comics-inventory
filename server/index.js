@@ -12,6 +12,7 @@ import { randomUUID } from 'node:crypto'
 import * as store from './store.js'
 import { recognizeCover } from './ocr.js'
 import { renderHtml } from './export.js'
+import { isIsoDate, todayIso } from '../src/loans.js'
 
 const app = express()
 app.use(express.json())
@@ -177,6 +178,50 @@ app.delete('/api/comics/:id', async (req, res) => {
       await fs.unlink(coverFile).catch(() => {})
     }
     res.json({ ok: true })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+const MAX_BORROWER_LENGTH = 200
+
+// Lend a comic (or edit the current loan). Loan fields are not part of
+// STRING_FIELDS, so the regular comic PUT/POST never touches them.
+app.put('/api/comics/:id/loan', async (req, res) => {
+  try {
+    const body = req.body ?? {} // Express 5 leaves req.body undefined without a JSON body
+    const str = (v) => (typeof v === 'string' ? v.trim() : '')
+    const to = str(body.to)
+    const date = str(body.date) || todayIso()
+    const due = str(body.due)
+    if (!to) return res.status(400).json({ error: 'Podaj, komu wypożyczasz komiks' })
+    if (to.length > MAX_BORROWER_LENGTH) {
+      return res
+        .status(400)
+        .json({ error: `Pole „Komu” może mieć najwyżej ${MAX_BORROWER_LENGTH} znaków` })
+    }
+    if (!isIsoDate(date) || (due && !isIsoDate(due))) {
+      return res.status(400).json({ error: 'Nieprawidłowa data (oczekiwany format RRRR-MM-DD)' })
+    }
+    if (due && due < date) {
+      return res
+        .status(400)
+        .json({ error: 'Termin zwrotu nie może być wcześniejszy niż data wypożyczenia' })
+    }
+    const comic = await store.setLoan(req.params.id, { to, date, due })
+    if (!comic) return res.status(404).json({ error: 'Nie znaleziono komiksu' })
+    res.json(comic)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// Mark a comic as returned (clears the loan).
+app.delete('/api/comics/:id/loan', async (req, res) => {
+  try {
+    const comic = await store.setLoan(req.params.id)
+    if (!comic) return res.status(404).json({ error: 'Nie znaleziono komiksu' })
+    res.json(comic)
   } catch (err) {
     res.status(500).json({ error: err.message })
   }

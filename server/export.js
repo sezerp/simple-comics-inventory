@@ -1,6 +1,7 @@
 import { promises as fs } from 'node:fs'
 import sharp from 'sharp'
 import * as store from './store.js'
+import { formatDate, isLoaned } from '../src/loans.js'
 
 const THUMB_WIDTH = 480
 const THUMB_QUALITY = 72
@@ -46,6 +47,19 @@ function factRow(label, value) {
   return `<p><span class="label">${escapeHtml(label)}:</span> ${escapeHtml(value)}</p>`
 }
 
+// Loan info as plain text only — the export deliberately has no loan styling,
+// filters or "overdue" state (it would go stale in a static file).
+function loanText(comic) {
+  if (!isLoaned(comic)) return ''
+  return [
+    comic.loan_to.trim(),
+    comic.loan_date && `od ${formatDate(comic.loan_date)}`,
+    comic.loan_due && `zwrot do ${formatDate(comic.loan_due)}`,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+}
+
 async function renderCard(comic, coverRef) {
   const coverIdx = await coverRef(comic.cover_path)
   const volume =
@@ -69,6 +83,7 @@ async function renderCard(comic, coverRef) {
     factRow('Wydawca', comic.publisher),
     factRow('Pisarz', store.splitList(comic.writers).join(', ')),
     factRow('Rysownik/Artysta', store.splitList(comic.artists).join(', ')),
+    factRow('Wypożyczona', loanText(comic)),
   ].join('')
 
   const categories = chipList(comic.categories)

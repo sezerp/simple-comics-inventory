@@ -62,6 +62,20 @@ export async function deleteComic(id) {
   }).then(readJson)
 }
 
+export async function lendComic(id, { to, date, due }) {
+  return fetch(`${BASE}/comics/${encodeURIComponent(id)}/loan`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ to, date, due }),
+  }).then(readJson)
+}
+
+export async function returnComic(id) {
+  return fetch(`${BASE}/comics/${encodeURIComponent(id)}/loan`, {
+    method: 'DELETE',
+  }).then(readJson)
+}
+
 export async function listTags() {
   return fetch(`${BASE}/tags`).then(readJson)
 }
